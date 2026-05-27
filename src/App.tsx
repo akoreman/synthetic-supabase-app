@@ -1,26 +1,34 @@
 import { useState } from 'react';
-import { supabase } from './lib/supabase';
 
 export default function App() {
   const [greeting, setGreeting] = useState<string | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
   async function handleGreet() {
-    const { data, error } = await supabase.functions.invoke('hello-world');
-    if (error) {
-      setGreeting(`Error: ${error.message}`);
+    const response = await fetch('/api/hello-world', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: response.statusText }));
+      setGreeting(`Error: ${err.message ?? response.statusText}`);
     } else {
+      const data = await response.json();
       setGreeting(data?.message ?? 'No message');
     }
   }
 
   async function handlePayment() {
-    const { data, error } = await supabase.functions.invoke('process-payment', {
-      body: { amount: 1000, currency: 'usd' },
+    const response = await fetch('/api/process-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ amount: 1000, currency: 'usd' }),
     });
-    if (error) {
-      setPaymentStatus(`Error: ${error.message}`);
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ message: response.statusText }));
+      setPaymentStatus(`Error: ${err.message ?? response.statusText}`);
     } else {
+      const data = await response.json();
       setPaymentStatus(data?.status ?? 'unknown');
     }
   }
